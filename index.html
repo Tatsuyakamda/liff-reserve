@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LIFF 予約</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>LIFF起動OK</h1>
+  <button id="btn">トーク入力欄へ（下書き）</button>
+
+  <script>
+    const LIFF_ID = "YOUR_LIFF_ID";     // 後で差し替え
+    const OA_LINE_ID = "@558ybtzq";     // あなたの公式アカウントID
+
+    async function main() {
+      await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+
+      document.getElementById("btn").onclick = () => {
+        const text = "お名前\n希望日\n時間";
+        const url =
+          "https://line.me/R/oaMessage/" +
+          encodeURIComponent(OA_LINE_ID) +
+          "/?" +
+          encodeURIComponent(text);
+
+        if (liff.isInClient()) {
+          liff.openWindow({ url, external: false });
+        } else {
+          location.href = url;
+        }
+      };
+    }
+    main();
+  </script>
+</body>
+</html>
