@@ -3,99 +3,152 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>予約（LIFF）</title>
+  <title>予約フォーム</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif; margin: 16px; }
-    .card { max-width: 560px; margin: 0 auto; padding: 16px; border: 1px solid #ddd; border-radius: 12px; }
-    label { display:block; margin-top: 12px; font-weight: 600; }
-    input, select, button { width: 100%; font-size: 16px; padding: 10px; margin-top: 6px; }
-    button { margin-top: 16px; font-weight: 700; }
-    pre { background:#f7f7f7; padding:12px; border-radius:10px; white-space:pre-wrap; }
-    .note { margin-top: 10px; color:#555; font-size: 13px; line-height: 1.6; }
+    :root { --bg:#ffffff; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --focus:#2563eb; }
+    body {
+      margin: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    h1 { margin: 0 0 14px; font-size: 22px; letter-spacing: .02em; }
+    .card { border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+    label { display:block; margin-top: 12px; font-weight: 700; font-size: 14px; }
+    .required::after { content:"（必須）"; color: var(--muted); font-weight: 600; margin-left: 6px; }
+    .section-title { margin-top: 18px; font-weight: 800; font-size: 15px; }
+    .sub { margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    input {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+    }
+    input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-weight: 900;
+      border: 0;
+      border-radius: 14px;
+      background: #111827;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h1 style="margin:0 0 8px;">予約</h1>
+  <div class="wrap">
+    <div class="card">
+      <h1>予約フォーム</h1>
 
-    <label>お名前（任意）</label>
-    <input id="name" type="text" placeholder="例：山田 太郎" />
+      <form id="form">
+        <label for="name" class="required">お名前</label>
+        <input id="name" name="name" type="text" required autocomplete="name" />
 
-    <label>希望日</label>
-    <input id="date" type="date" />
+        <div class="section-title">ご予約第1希望</div>
+        <div class="sub">
+          <div class="grid">
+            <div>
+              <label for="date1" class="required">日付:</label>
+              <input id="date1" name="date1" type="date" required />
+            </div>
+            <div>
+              <label for="time1" class="required">時間:</label>
+              <input id="time1" name="time1" type="time" required />
+            </div>
+          </div>
+        </div>
 
-    <label>時間</label>
-    <select id="time">
-      <option value="">選択してください</option>
-      <option>10:00</option><option>10:30</option>
-      <option>11:00</option><option>11:30</option>
-      <option>12:00</option><option>12:30</option>
-      <option>13:00</option><option>13:30</option>
-      <option>14:00</option><option>14:30</option>
-      <option>15:00</option><option>15:30</option>
-      <option>16:00</option><option>16:30</option>
-      <option>17:00</option>
-    </select>
+        <div class="section-title">ご予約第2希望</div>
+        <div class="sub">
+          <div class="grid">
+            <div>
+              <label for="date2">日付:</label>
+              <input id="date2" name="date2" type="date" />
+            </div>
+            <div>
+              <label for="time2">時間:</label>
+              <input id="time2" name="time2" type="time" />
+            </div>
+          </div>
+        </div>
 
-    <button id="btn">LINEの入力欄に反映（未送信）</button>
-
-    <div class="note">
-      ボタン押下後、公式アカウント（@558ybtzq）のトーク画面を開き、入力欄に文章を入れます（送信はしません）。<br>
-      仕組み：<code>https://line.me/R/oaMessage/…</code>（LINE URLスキーム）[Source]
-      https://developers.line.biz/ja/docs/line-login/using-line-url-scheme/#opening-chat-screen
+        <button id="submitBtn" type="submit">送信する</button>
+      </form>
     </div>
-
-    <h2 style="margin-top:18px;font-size:16px;">プレビュー（入力欄に入る文章）</h2>
-    <pre id="preview"></pre>
   </div>
 
   <script>
-    const OA_LINE_ID = "@558ybtzq";
+    // 固定値（あなたの環境）
     const LIFF_ID = "2009276936-E6Lu6Spd";
+    const OA_LINE_ID = "@558ybtzq";
 
     const $ = (id) => document.getElementById(id);
 
-    function formatDateYYYYMMDD(isoDate) {
-      if (!isoDate) return "";
-      return isoDate.replaceAll("-", "/");
+    function formatDate(isoDate) {
+      // input[type=date] -> "YYYY-MM-DD" を "YYYY/MM/DD" に
+      return isoDate ? isoDate.replaceAll("-", "/") : "";
     }
 
-    function buildDraftText() {
-      const name = $("name").value.trim();
-      const date = formatDateYYYYMMDD($("date").value);
-      const time = $("time").value;
+    function buildDraftText({ name, date1, time1, date2, time2 }) {
+      const hasSecond = Boolean(date2 || time2);
 
-      // 未入力は空欄のまま残す
       const lines = [
-        "お名前", name || "",
+        "予約フォーム",
         "",
-        "希望日", date || "",
+        `お名前：${name}`,
         "",
-        "時間", time || ""
+        "ご予約第1希望",
+        `日付：${formatDate(date1)}`,
+        `時間：${time1}`
       ];
-      return lines.join("\n").trimEnd();
-    }
 
-    function updatePreview() {
-      $("preview").textContent = buildDraftText();
+      if (hasSecond) {
+        lines.push(
+          "",
+          "ご予約第2希望",
+          `日付：${formatDate(date2)}`,
+          `時間：${time2}`
+        );
+      }
+
+      return lines.join("\n");
     }
 
     async function main() {
-      updatePreview();
-      ["name","date","time"].forEach(id => {
-        $(id).addEventListener("input", updatePreview);
-        $(id).addEventListener("change", updatePreview);
-      });
-
-      // 公式：外部ブラウザ対策として withLoginOnExternalBrowser を使える
+      // LIFF初期化（サンプルは公式ドキュメント参照）
       // https://developers.line.biz/ja/docs/liff/developing-liff-apps/ [Source]
       await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
 
-      $("btn").addEventListener("click", () => {
-        const text = buildDraftText();
+      $("form").addEventListener("submit", (e) => {
+        e.preventDefault();
 
-        // 公式アカウントのトーク画面を開き、入力欄にテキストをセット
+        if (!$("form").reportValidity()) return;
+
+        const payload = {
+          name: $("name").value.trim(),
+          date1: $("date1").value,
+          time1: $("time1").value,
+          date2: $("date2").value,
+          time2: $("time2").value
+        };
+
+        const text = buildDraftText(payload);
+
+        // 公式アカウントのトーク画面を開き、入力欄にテキストをセット（未送信）
         // https://developers.line.biz/ja/docs/line-login/using-line-url-scheme/#opening-chat-screen [Source]
         const url =
           "https://line.me/R/oaMessage/" +
@@ -103,20 +156,26 @@
           "/?" +
           encodeURIComponent(text);
 
-        // LIFF内（LINEアプリ内）なら openWindow が基本
-        // openWindow例：https://developers.line.biz/ja/docs/liff/developing-liff-apps/ [Source]
-        if (liff.isInClient()) {
-          liff.openWindow({ url, external: false });
-        } else {
-          // 外部ブラウザ時のフォールバック
-          window.location.href = url;
+        $("submitBtn").disabled = true;
+
+        try {
+          if (liff.isInClient()) {
+            // LINEアプリ内（LIFFブラウザ）でトークを開く
+            liff.openWindow({ url, external: false });
+          } else {
+            // 外部ブラウザ時のフォールバック
+            window.location.href = url;
+          }
+        } finally {
+          // 画面遷移しないケースに備えて戻す（通常は即遷移する）
+          setTimeout(() => { $("submitBtn").disabled = false; }, 800);
         }
       });
     }
 
-    main().catch((err) => {
-      console.error(err);
-      alert("LIFF初期化に失敗。Endpoint URL配下で開けているか等を確認してください。");
+    main().catch(() => {
+      // 画面要件に合わせて、エラー表示（説明文/プレビュー）は出さない
+      // 必要ならブラウザのコンソールで確認してください
     });
   </script>
 </body>
